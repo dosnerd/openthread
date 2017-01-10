@@ -40,6 +40,9 @@
 #include <platform/platform.h>
 #include <assert.h>
 
+#include "base.h"
+#include "program.h"
+
 void otSignalTaskletPending(otInstance *aInstance)
 {
     (void)aInstance;
@@ -77,9 +80,19 @@ int main(int argc, char *argv[])
     diagInit(sInstance);
 #endif
 
+    //setting static instance
+    otStaticInstance(sInstance);
+
+    //setup program
+   setup(sInstance);
+
     while (1)
     {
         otProcessQueuedTasklets(sInstance);
+
+        //run loop in program
+        loop(sInstance);
+
         PlatformProcessDrivers(sInstance);
     }
 

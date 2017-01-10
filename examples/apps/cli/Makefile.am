@@ -46,6 +46,10 @@ LDFLAGS_COMMON                                                         = \
     $(NULL)
 
 SOURCES_COMMON                                                         = \
+    coapClient.c                                                         \
+    coapServer.c                                                         \
+    base.c                                                               \
+    program.c                                                            \
     main.c                                                               \
     $(NULL)
 
