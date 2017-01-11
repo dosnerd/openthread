@@ -27,16 +27,16 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 	//check status of message
 	switch (aResult) {
 	case kThreadError_Abort:
-		cliPrint("***Received aborted")
+		cliPrint("> Response aborted")
 		return;
 	case kThreadError_None:
-		cliPrint("******message received")
+		cliPrint("> Response received")
 		break;
 	case kThreadError_ResponseTimeout:
-		cliPrint("***TimeOut for a message")
+		cliPrint("> TimeOut for a response")
 		return;
 	default:
-		cliPrint("***Received message: Unknown error: %i", aResult)
+		cliPrint("***Response message: Unknown error: %i", aResult)
 		return;
 	}
 
@@ -50,7 +50,7 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 
 	//Add null at end of string, just to be sure
 	buffer[length] = '\0';
-	cliPrint("Message: \"%s\"", buffer);
+	cliPrint("\tPayload: \"%s\"", buffer);
 	free(buffer);
 
 	(void) aContext;
@@ -65,7 +65,7 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 void printList(otInstance *sInstance) {
 	otRouterInfo RouterInfo;
 	otChildInfo ChildInfo;
-	cliPrint("List:");
+
 	for (uint8_t i = 0;; i++) {
 		if (otGetRouterInfo(sInstance, i, &RouterInfo) != kThreadError_None) {
 			break;
@@ -79,9 +79,6 @@ void printList(otInstance *sInstance) {
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", RouterInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			//print info
-			cliPrint("Router %i => fdde:ad00:beef:0:0:ff:fe00:%04x", i, RouterInfo.mRloc16);
-
 			coapClientTransmit(address, kCoapRequestGet, "mytest", "Koekjes", &responseHandler);
 			//sendMessage(sInstance, address);
 		}
@@ -89,7 +86,6 @@ void printList(otInstance *sInstance) {
 
 	for (uint8_t i = 0;; i++) {
 		if (otGetChildInfoByIndex(sInstance, i, &ChildInfo) != kThreadError_None) {
-			cliPrint("Done");
 			return;
 		}
 
@@ -101,7 +97,6 @@ void printList(otInstance *sInstance) {
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
 			otIp6AddressFromString(sAddress, &address);
 
-			cliPrint("Child %i => fdde:ad00:beef:0:0:ff:fe00:%04x", i, ChildInfo.mRloc16);
 			coapClientTransmit(address, kCoapRequestGet, "mytest", "Koekjes", &responseHandler);
 			//sendMessage(sInstance, address);
 		}

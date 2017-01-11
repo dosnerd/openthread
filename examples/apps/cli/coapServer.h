@@ -23,5 +23,6 @@
 void coapServerStart(otInstance *sInstance);
 void coapServerTestRequestHandler (void *aContext, otCoapHeader *aHeader, otMessage aMessage,
                                      const otMessageInfo *aMessageInfo);
+void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath);
 
 #endif /* EXAMPLES_APPS_CLI_INCLUDES_PROGRAM_H_ */

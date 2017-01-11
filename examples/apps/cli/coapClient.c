@@ -61,7 +61,6 @@ void coapClientTransmit(otIp6Address to, otCoapCode aCode, const char *aUriPath,
 	err = otCoapSendRequest(otStaticInstance(STATIC_GET), aMessage, &aMessageInfo, aHandler, 0);
 	switch (err) {
 	case kThreadError_None:
-		cliPrint("Request sended")
 		break;
 	case kThreadError_NoBufs:
 		cliPrint("No buff")

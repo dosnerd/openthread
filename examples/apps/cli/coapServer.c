@@ -15,10 +15,13 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 
 	uint16_t length, offset;
 	char *buffer;
-	const char *buf = "Response back of__: ";		//response message
+	//const char *buf = "Response back of: ";		//response message
+	const char *text = "%04x => Response back of: ";
+	char buf[strlen(text)];
+	sprintf(buf, text, otGetRloc16(otStaticInstance(STATIC_GET)));//response message
 	ThreadError err;
 
-	cliPrint("****Received request");
+	coapServerPrintRequest(aHeader, "mytest");
 
 	//print message
 	length = otGetMessageLength(aMessage) - otGetMessageOffset(aMessage);
@@ -29,7 +32,7 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 
 	//be sure that string end with null character
 	buffer[length] = '\0';
-	cliPrint("Message: %s: ", buffer);
+	cliPrint("\tPayload: %s: ", buffer);
 
 	//create header
 	otCoapHeader aCoapHeader;
@@ -54,7 +57,6 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	err = otCoapSendResponse(otStaticInstance(STATIC_GET), returnMessage, aMessageInfo);
 	switch (err) {
 	case kThreadError_None:
-		cliPrint("Response transmitted")
 		break;
 	case kThreadError_NoBufs:
 		cliPrint("No buff")
@@ -88,3 +90,27 @@ void coapServerStart(otInstance *sInstance) {
 	SucceedOrPrint(otCoapServerAddResource(sInstance, sCoapResource), "Can not add test resource");
 }
 
+void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
+	otCoapCode coapCode = otCoapHeaderGetCode(aHeader);
+
+	switch (coapCode) {
+	case kCoapRequestGet:
+		cliPrint("> GET: /%s", aUriPath)
+		break;
+	case kCoapRequestPost:
+		cliPrint("> POST: /%s", aUriPath)
+		break;
+	case kCoapRequestDelete:
+		cliPrint("> DELETE: /%s", aUriPath)
+		break;
+	case kCoapRequestPut:
+		cliPrint("> PUT: /%s", aUriPath)
+		break;
+	case kCoapCodeEmpty:
+		cliPrint("> EMPTY: /%s", aUriPath)
+		break;
+	default:
+		cliPrint("***UNKOWN: /%s", aUriPath)
+		break;
+	}
+}
