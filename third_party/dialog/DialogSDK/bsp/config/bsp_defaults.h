@@ -1192,7 +1192,7 @@
 #endif
 
 #ifndef dg_configUSE_HW_TIMER2
-#  define dg_configUSE_HW_TIMER2                (0)
+#  define dg_configUSE_HW_TIMER2                (1)
 #endif
 
 #ifndef dg_configUSE_HW_TRNG

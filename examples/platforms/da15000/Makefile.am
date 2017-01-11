@@ -88,6 +88,7 @@ libopenthread_da15000_a_SOURCES                                                 
     @top_builddir@/third_party/dialog/DialogSDK/interfaces/ftdf/src/ad_ftdf_phy_api.c     \
     @top_builddir@/third_party/dialog/DialogSDK/interfaces/ftdf/src/ad_ftdf.c             \
     @top_builddir@/third_party/dialog/DialogSDK/interfaces/ftdf/src/main.c                \
+	@top_builddir@/third_party/dialog/DialogSDK/bsp/peripherals/src/hw_timer2.c           \
     $(NULL)
 
 noinst_HEADERS                                                                          = \
