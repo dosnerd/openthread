@@ -34,6 +34,9 @@ bin_PROGRAMS                                                           = \
     $(NULL)
 
 CPPFLAGS_COMMON                                                        = \
+    -I$(top_srcdir)/third_party/dialog/DialogSDK/bsp/config              \
+    -I$(top_srcdir)/third_party/dialog/DialogSDK/bsp/include             \
+    -I$(top_srcdir)/third_party/dialog/DialogSDK/bsp/peripherals/include \
     -I$(top_srcdir)/include                                              \
     -I$(top_srcdir)/src/core                                             \
     -I$(top_srcdir)/examples/platforms                                   \
