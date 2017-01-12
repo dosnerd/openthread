@@ -10,6 +10,9 @@
 
 #include <openthread.h>
 
+//temp
+void printList(otInstance *sInstance, const char *resource, const char *message);
+
 void setup(otInstance *);
 void loop(otInstance *);
 

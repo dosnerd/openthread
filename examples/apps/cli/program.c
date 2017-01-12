@@ -10,14 +10,12 @@
 #include <openthread.h>
 #include "coapServer.h"
 #include "coapClient.h"
+#include "uartCostumeHandler.h"
 
 #include <bsp_defaults.h>
 #include <bsp_definitions.h>
 #include <hw_gpio.h>
 #include <hw_timer2.h>
-
-#include <hw_uart.h>
-#include <string.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,16 +41,16 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 	//check status of message
 	switch (aResult) {
 	case kThreadError_Abort:
-		cliPrint("> Response aborted")
+		uartCostumeWritet("> Response aborted");
 		return;
 	case kThreadError_None:
-		cliPrint("> Response received")
+		uartCostumeWritet("> Response received");
 		break;
 	case kThreadError_ResponseTimeout:
-		cliPrint("> TimeOut for a response")
+		uartCostumeWritet("> TimeOut for a response");
 		return;
 	default:
-		cliPrint("***Response message: Unknown error: %i", aResult)
+		uartCostumeWritef("***Response message: Unknown error: %i", aResult)
 		return;
 	}
 
@@ -66,7 +64,7 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 
 	//Add null at end of string, just to be sure
 	buffer[length] = '\0';
-	cliPrint("\tPayload: \"%s\"", buffer);
+	uartCostumeWritef("\tPayload: \"%s\"", buffer);
 	free(buffer);
 
 	(void) aContext;
@@ -76,7 +74,7 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 	(void) aResult;
 }
 
-void printList(otInstance *sInstance) {
+void printList(otInstance *sInstance, const char *resource, const char *message) {
 	otRouterInfo RouterInfo;
 	otChildInfo ChildInfo;
 
@@ -93,7 +91,7 @@ void printList(otInstance *sInstance) {
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", RouterInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			coapClientTransmit(address, kCoapRequestGet, "mytest", "Koekjes", &responseHandler);
+			coapClientTransmit(address, kCoapRequestGet, resource, message, &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -111,7 +109,7 @@ void printList(otInstance *sInstance) {
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
 			otIp6AddressFromString(sAddress, &address);
 
-			coapClientTransmit(address, kCoapRequestGet, "mytest", "Koekjes", &responseHandler);
+			coapClientTransmit(address, kCoapRequestGet, resource, message, &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -123,11 +121,11 @@ uint16_t b = 1;
 void setup(otInstance *sInstance) {
 	//setup and start openthread
 	otSetUp(sInstance, 13, 0xface);
-	cliPrint("ot setup done");
+	uartCostumeWritet("ot setup done");
 
 	coapServerStart(sInstance);
 
-	cliPrint("CoAP server port: %i", OTCOAP_PORT);
+	uartCostumeWritef("CoAP server port: %i", OTCOAP_PORT);
 
 	//Initialize timer2 as PWM
 	timer2_config cfg;
@@ -144,38 +142,19 @@ void setup(otInstance *sInstance) {
 }
 
 void loop(otInstance *sInstance) {
-	uint8_t aBuf;
-	(void)aBuf;
-
-	// Wait until received data are available
-	if (!hw_uart_read_buf_empty(HW_UART1)) {
-		// Read element from the receive FIFO
-		aBuf = UBA(HW_UART1)->UART2_RBR_THR_DLL_REG;
-
-
-		//const char *text = "buffer:";
-		hw_uart_write_buffer(HW_UART1, &aBuf, 1);
-		return;
-	}
-
 	//prevent unsused variable error
 	(void) sInstance;
-	if (a > 32755) {
-		a = 0;
-		b++;
-
-		if (b > 10) {
-			b = 0;
-
-			printList(sInstance);
-
-			const char *text = "hello world";
-			hw_uart_write_buffer(HW_UART1, text, strlen(text));
-
-		}
-	} else {
-		a++;
-	}
+//	if (a > 32755) {
+//		a = 0;
+//		b++;
+//
+//		if (b > 10) {
+//			b = 0;
+//			printList(sInstance);
+//		}
+//	} else {
+//		a++;
+//	}
 
 	//Start of DirtyPWM loop
 	if (skipCounter >= skipSteps) {

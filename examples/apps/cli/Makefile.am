@@ -49,6 +49,7 @@ LDFLAGS_COMMON                                                         = \
     $(NULL)
 
 SOURCES_COMMON                                                         = \
+    uartCostumeHandler.c                                                 \
     coapClient.c                                                         \
     coapServer.c                                                         \
     base.c                                                               \

@@ -63,10 +63,10 @@ void coapClientTransmit(otIp6Address to, otCoapCode aCode, const char *aUriPath,
 	case kThreadError_None:
 		break;
 	case kThreadError_NoBufs:
-		cliPrint("No buff")
+		uartCostumeWritet("<REQUEST>No buff\n");
 		break;
 	default:
-		cliPrint("Unknown error: %i", err)
+		uartCostumeWritef("<REQUEST>Unknown error: %i", err);
 		break;
 	}
 

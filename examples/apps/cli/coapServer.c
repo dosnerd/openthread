@@ -32,7 +32,7 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 
 	//be sure that string end with null character
 	buffer[length] = '\0';
-	cliPrint("\tPayload: %s: ", buffer);
+	uartCostumeWritef("\tPayload: %s: ", buffer);
 
 	//create header
 	otCoapHeader aCoapHeader;
@@ -43,7 +43,7 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	//create message
 	otMessage returnMessage = otCoapNewMessage(otStaticInstance(STATIC_GET), &aCoapHeader);
 	if (returnMessage == 0) {
-		cliPrint("Can not create response message");
+		uartCostumeWritet("Can not create response message");
 		otFreeMessage(aMessage);
 		return;
 	}
@@ -59,10 +59,10 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	case kThreadError_None:
 		break;
 	case kThreadError_NoBufs:
-		cliPrint("No buff")
+		uartCostumeWritet("<RESPONSE>No buff");
 		break;
 	default:
-		cliPrint("Unknown error: %i", err)
+		uartCostumeWritef("<RESPONSE>Unknown error: %i", err);
 		break;
 	}
 	(void) aContext;
@@ -95,22 +95,22 @@ void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
 
 	switch (coapCode) {
 	case kCoapRequestGet:
-		cliPrint("> GET: /%s", aUriPath)
+		uartCostumeWritef("> GET: /%s", aUriPath)
 		break;
 	case kCoapRequestPost:
-		cliPrint("> POST: /%s", aUriPath)
+		uartCostumeWritef("> POST: /%s", aUriPath)
 		break;
 	case kCoapRequestDelete:
-		cliPrint("> DELETE: /%s", aUriPath)
+		uartCostumeWritef("> DELETE: /%s", aUriPath)
 		break;
 	case kCoapRequestPut:
-		cliPrint("> PUT: /%s", aUriPath)
+		uartCostumeWritef("> PUT: /%s", aUriPath)
 		break;
 	case kCoapCodeEmpty:
-		cliPrint("> EMPTY: /%s", aUriPath)
+		uartCostumeWritef("> EMPTY: /%s", aUriPath)
 		break;
 	default:
-		cliPrint("***UNKOWN: /%s", aUriPath)
+		uartCostumeWritef("***UNKOWN: /%s", aUriPath)
 		break;
 	}
 	(void)aUriPath;

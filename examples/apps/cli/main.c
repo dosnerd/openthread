@@ -41,6 +41,7 @@
 #include <assert.h>
 
 #include "base.h"
+#include "uartCostumeHandler.h"
 #include "program.h"
 
 void otSignalTaskletPending(otInstance *aInstance)
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
 #endif
     assert(sInstance);
 
-    //otCliUartInit(sInstance);
+    otCliUartInit(sInstance);
 
 #if OPENTHREAD_ENABLE_DIAG
     diagInit(sInstance);
@@ -89,11 +90,11 @@ int main(int argc, char *argv[])
     while (1)
     {
         otProcessQueuedTasklets(sInstance);
+        PlatformProcessDrivers(sInstance);
 
         //run loop in program
         loop(sInstance);
-
-        PlatformProcessDrivers(sInstance);
+        uartCostumeProcess();
     }
 
     // otInstanceFinalize(sInstance);
