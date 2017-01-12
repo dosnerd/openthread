@@ -16,6 +16,9 @@
 #include <hw_gpio.h>
 #include <hw_timer2.h>
 
+#include <hw_uart.h>
+#include <string.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -73,8 +76,6 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 	(void) aResult;
 }
 
-
-
 void printList(otInstance *sInstance) {
 	otRouterInfo RouterInfo;
 	otChildInfo ChildInfo;
@@ -127,14 +128,14 @@ void setup(otInstance *sInstance) {
 	coapServerStart(sInstance);
 
 	cliPrint("CoAP server port: %i", OTCOAP_PORT);
-	
+
 	//Initialize timer2 as PWM
-    timer2_config cfg;
-    hw_timer2_init(&cfg);
-    hw_timer2_set_frequency(500);
-    hw_timer2_set_pwm_duty_cycle(0, 0);
-    hw_timer2_enable();
-	
+	timer2_config cfg;
+	hw_timer2_init(&cfg);
+	hw_timer2_set_frequency(500);
+	hw_timer2_set_pwm_duty_cycle(0, 0);
+	hw_timer2_enable();
+
 	//Initialize GPIO pin P4_0 as GPIO using PWM timer 2
 	hw_gpio_set_pin_function(HW_GPIO_PORT_4, HW_GPIO_PIN_0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_PWM2);
 
@@ -143,6 +144,20 @@ void setup(otInstance *sInstance) {
 }
 
 void loop(otInstance *sInstance) {
+	uint8_t aBuf;
+	(void)aBuf;
+
+	// Wait until received data are available
+	if (!hw_uart_read_buf_empty(HW_UART1)) {
+		// Read element from the receive FIFO
+		aBuf = UBA(HW_UART1)->UART2_RBR_THR_DLL_REG;
+
+
+		//const char *text = "buffer:";
+		hw_uart_write_buffer(HW_UART1, &aBuf, 1);
+		return;
+	}
+
 	//prevent unsused variable error
 	(void) sInstance;
 	if (a > 32755) {
@@ -154,35 +169,34 @@ void loop(otInstance *sInstance) {
 
 			printList(sInstance);
 
+			const char *text = "hello world";
+			hw_uart_write_buffer(HW_UART1, text, strlen(text));
+
 		}
 	} else {
 		a++;
 	}
-	
+
 	//Start of DirtyPWM loop
-	if(skipCounter >= skipSteps){
-			skipCounter = 0;
-			if(isIncrementing){
-					if(pwmDutyCycle <= (255 - stepSize)){
-							pwmDutyCycle += stepSize;
-							hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
-					}
-					else{
-							isIncrementing = 0;
-					}
+	if (skipCounter >= skipSteps) {
+		skipCounter = 0;
+		if (isIncrementing) {
+			if (pwmDutyCycle <= (255 - stepSize)) {
+				pwmDutyCycle += stepSize;
+				hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
+			} else {
+				isIncrementing = 0;
 			}
-			else{
-					if(pwmDutyCycle >= stepSize){
-							pwmDutyCycle -= stepSize;
-							hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
-					}
-					else{
-							isIncrementing = 1;
-					}
+		} else {
+			if (pwmDutyCycle >= stepSize) {
+				pwmDutyCycle -= stepSize;
+				hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
+			} else {
+				isIncrementing = 1;
 			}
-	}
-	else{
-			skipCounter++;
+		}
+	} else {
+		skipCounter++;
 	}
 	//End of DirtyPWM loop
 }

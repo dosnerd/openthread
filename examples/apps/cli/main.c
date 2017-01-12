@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 #endif
     assert(sInstance);
 
-    otCliUartInit(sInstance);
+    //otCliUartInit(sInstance);
 
 #if OPENTHREAD_ENABLE_DIAG
     diagInit(sInstance);

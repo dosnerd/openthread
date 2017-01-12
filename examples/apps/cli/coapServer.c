@@ -113,4 +113,5 @@ void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
 		cliPrint("***UNKOWN: /%s", aUriPath)
 		break;
 	}
+	(void)aUriPath;
 }
