@@ -21,6 +21,7 @@
 //temp
 #include "program.h"
 #include "base.h"
+#include "coapClient.h"
 
 #define MAX_ARGS 32
 
@@ -31,7 +32,8 @@ struct Command {
 };
 
 //const struct Command sCommands[];
-const struct Command sCommands[] = { { "echo", &ProcessEcho }, { "broadcast", &ProcessBroadcast }, };
+const struct Command sCommands[] = { { "echo", &ProcessEcho }, { "broadcast", &ProcessBroadcast }, {
+		"send", &ProcessSend }, };
 
 char *uartCostumeGetInputBuffer() {
 	static char buffer[UART_INPUT_BUFFER];
@@ -152,4 +154,30 @@ void ProcessEcho(int argc, char *argv[]) {
 		uartCostumeWritet(argv[i]);
 	}
 }
+void ProcessSend(int argc, char *argv[]) {
+	otIp6Address address;
+	char *buffer;
 
+	if (argc > 2) {
+		//make Ip6Address
+		if (otIp6AddressFromString(argv[0], &address) != kThreadError_None) {
+			uartCostumeWritet("Can not parse address");
+			return;
+		}
+
+		buffer = malloc(strlen(argv[2]));
+		strcpy(buffer, argv[2]);
+		for (int i = 3; i < argc; ++i) {
+			buffer = realloc(buffer, strlen(buffer) + strlen(argv[i]) + 1);
+
+			strcat(buffer, " \0");
+			strcat(buffer, argv[i]);
+		}
+		uartCostumeWritef("send to %s: %s",argv[0], buffer)
+
+		coapClientTransmit(address, kCoapRequestGet, argv[1], buffer, &responseHandler);
+		free(buffer);
+	} else {
+		uartCostumeWritet("Not enough arguments. Use <addr> <resource> message...");
+	}
+}

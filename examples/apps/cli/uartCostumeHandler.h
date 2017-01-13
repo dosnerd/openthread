@@ -30,5 +30,6 @@ void uartCostumeWritet(const char *text);
 
 void ProcessBroadcast(int argc, char *argv[]);
 void ProcessEcho(int argc, char *argv[]);
+void ProcessSend(int argc, char *argv[]);
 
 #endif /* EXAMPLES_APPS_CLI_UARTCOSTUMEHANDLER_H_ */

@@ -107,7 +107,7 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 
 			//make Ip6Address
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
-			otIp6AddressFromString(sAddress, &address);
+			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
 			coapClientTransmit(address, kCoapRequestGet, resource, message, &responseHandler);
 			//sendMessage(sInstance, address);
@@ -144,17 +144,6 @@ void setup(otInstance *sInstance) {
 void loop(otInstance *sInstance) {
 	//prevent unsused variable error
 	(void) sInstance;
-//	if (a > 32755) {
-//		a = 0;
-//		b++;
-//
-//		if (b > 10) {
-//			b = 0;
-//			printList(sInstance);
-//		}
-//	} else {
-//		a++;
-//	}
 
 	//Start of DirtyPWM loop
 	if (skipCounter >= skipSteps) {
