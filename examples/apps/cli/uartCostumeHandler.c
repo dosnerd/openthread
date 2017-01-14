@@ -35,7 +35,10 @@ struct Command {
 const struct Command sCommands[] = {
 		{ "echo", &ProcessEcho },
 		{ "broadcast", &ProcessBroadcast },
-		{"send", &ProcessSend },
+		{"GET", &ProcessGET },
+		{"POST", &ProcessPOST },
+		{"PUT", &ProcessPUT },
+		{"DELETE", &ProcessDELETE },
 };
 
 char *uartCostumeGetInputBuffer() {
@@ -159,30 +162,43 @@ void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
 	}
 }
 
-void ProcessSend(int argc, char *argv[], otInstance *sInstance) {
+void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code){
 	otIp6Address address;
-	char *buffer;
+		char *buffer;
 
-	if (argc > 2) {
-		//make Ip6Address
-		if (otIp6AddressFromString(argv[0], &address) != kThreadError_None) {
-			uartCostumeWritet("Can not parse address");
-			return;
+		if (argc > 2) {
+			//make Ip6Address
+			if (otIp6AddressFromString(argv[0], &address) != kThreadError_None) {
+				uartCostumeWritet("Can not parse address");
+				return;
+			}
+
+			buffer = malloc(strlen(argv[2]));
+			strcpy(buffer, argv[2]);
+			for (int i = 3; i < argc; ++i) {
+				buffer = realloc(buffer, strlen(buffer) + strlen(argv[i]) + 1);
+
+				strcat(buffer, " \0");
+				strcat(buffer, argv[i]);
+			}
+			uartCostumeWritef("send to %s: %s",argv[0], buffer)
+
+			coapClientTransmit(sInstance, address, code, argv[1], buffer, &responseHandler);
+			free(buffer);
+		} else {
+			uartCostumeWritet("Not enough arguments. Use <addr> <resource> message...");
 		}
+}
 
-		buffer = malloc(strlen(argv[2]));
-		strcpy(buffer, argv[2]);
-		for (int i = 3; i < argc; ++i) {
-			buffer = realloc(buffer, strlen(buffer) + strlen(argv[i]) + 1);
-
-			strcat(buffer, " \0");
-			strcat(buffer, argv[i]);
-		}
-		uartCostumeWritef("send to %s: %s",argv[0], buffer)
-
-		coapClientTransmit(sInstance, address, kCoapRequestGet, argv[1], buffer, &responseHandler);
-		free(buffer);
-	} else {
-		uartCostumeWritet("Not enough arguments. Use <addr> <resource> message...");
-	}
+void ProcessGET(int argc, char *argv[], otInstance *sInstance) {
+	ProcessSend(argc, argv, sInstance, kCoapRequestGet);
+}
+void ProcessPOST(int argc, char *argv[], otInstance *sInstance) {
+	ProcessSend(argc, argv, sInstance, kCoapRequestPost);
+}
+void ProcessPUT(int argc, char *argv[], otInstance *sInstance) {
+	ProcessSend(argc, argv, sInstance, kCoapRequestPut);
+}
+void ProcessDELETE(int argc, char *argv[], otInstance *sInstance) {
+	ProcessSend(argc, argv, sInstance, kCoapRequestDelete);
 }

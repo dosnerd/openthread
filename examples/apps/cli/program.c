@@ -91,7 +91,8 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", RouterInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message, &responseHandler);
+			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
+					&responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -109,7 +110,8 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message, &responseHandler);
+			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
+					&responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -119,11 +121,22 @@ uint16_t a = 1;
 uint16_t b = 1;
 
 void setup(otInstance *sInstance) {
+	contextInfo *instanceInfo = malloc(sizeof(contextInfo));
+	//contextInfo *descriptionInfo = malloc(sizeof(contextInfo));
+
+	instanceInfo->info = sInstance;
+	instanceInfo->next = 0;
+
+	//descriptionInfo->info = "A standard, not installed, device with pwm test running";
+	//descriptionInfo->next = instanceInfo;
+
 	//setup and start openthread
 	otSetUp(sInstance, 13, 0xface);
 	uartCostumeWritet("ot setup done");
 
 	coapServerStart(sInstance);
+	coapServerCreateResource(sInstance, "enabled", coapServerEnabledRequest, instanceInfo);
+	//coapServerCreateResource(sInstance, "enabled", coapServerEnabledRequest, instanceInfo);
 
 	uartCostumeWritef("CoAP server port: %i", OTCOAP_PORT);
 

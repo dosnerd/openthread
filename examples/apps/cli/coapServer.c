@@ -11,35 +11,12 @@
 
 #include "uartCostumeHandler.h"
 
-void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
-		const otMessageInfo *aMessageInfo) {
-
-	uint16_t length, offset;
-	const char *text = "%04x => Response back of: ";
-	char buf[strlen(text)];
-	char *buffer;
-	contextInfo *sInstanceInfo = aContext;
-	otInstance *sInstance = sInstanceInfo->info;
+void coapServerSendResponse(otInstance *sInstance, otCoapHeader *aHeader,
+		const otMessageInfo *aMessageInfo, const void *message, uint16_t len) {
+	otCoapHeader aCoapHeader;
 	ThreadError err;
 
-	sprintf(buf, text, otGetRloc16(sInstance)); //response message
-
-	coapServerPrintRequest(aHeader, "mytest");
-	free(aContext);
-
-	//print message
-	length = otGetMessageLength(aMessage) - otGetMessageOffset(aMessage);
-	offset = otGetMessageOffset(aMessage);
-
-	buffer = malloc(sizeof(char) * (length + 1));
-	otReadMessage(aMessage, offset, buffer, length);
-
-	//be sure that string end with null character
-	buffer[length] = '\0';
-	uartCostumeWritef("\tPayload: %s: ", buffer);
-
 	//create header
-	otCoapHeader aCoapHeader;
 	otCoapHeaderInit(&aCoapHeader, kCoapTypeAcknowledgment, kCoapResponseContent);
 	otCoapHeaderSetMessageId(&aCoapHeader, otCoapHeaderGetMessageId(aHeader));
 	otCoapHeaderSetPayloadMarker(&aCoapHeader);
@@ -48,14 +25,11 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	otMessage returnMessage = otCoapNewMessage(sInstance, &aCoapHeader);
 	if (returnMessage == 0) {
 		uartCostumeWritet("Can not create response message");
-		otFreeMessage(aMessage);
 		return;
 	}
 
 	//writing response
-	otAppendMessage(returnMessage, buf, strlen(buf));
-	otAppendMessage(returnMessage, buffer, strlen(buffer));
-	free(buffer);
+	otAppendMessage(returnMessage, message, len);
 
 	//send response and clean up
 	err = otCoapSendResponse(sInstance, returnMessage, aMessageInfo);
@@ -66,10 +40,10 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 		uartCostumeWritet("<RESPONSE>No buff");
 		break;
 	default:
-		uartCostumeWritef("<RESPONSE>Unknown error: %i", err);
+		uartCostumeWritef("<RESPONSE>Unknown error: %i", err)
+		;
 		break;
 	}
-	(void) aContext;
 }
 
 void coapServerStart(otInstance *sInstance) {
@@ -81,13 +55,12 @@ void coapServerStart(otInstance *sInstance) {
 	SucceedOrPrint(otCoapServerSetPort(sInstance, OTCOAP_PORT), "Can not set port");
 	SucceedOrPrint(otCoapServerStart(sInstance), "Can not start Coap server");
 
-
-	(void)info;
+	(void) info;
 	coapServerCreateResource(sInstance, "mytest", coapServerTestRequestHandler, info);
 }
 
 otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
-		otCoapRequestHandler mHandler, contextInfo *mContextInfo){
+		otCoapRequestHandler mHandler, contextInfo *mContextInfo) {
 	otCoapResource *sCoapResource;
 
 	sCoapResource = calloc(1, sizeof(otCoapResource));
@@ -96,7 +69,7 @@ otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
 	sCoapResource->mNext = 0;
 	sCoapResource->mContext = mContextInfo;
 
-	if (otCoapServerAddResource(sInstance, sCoapResource) != kThreadError_None){
+	if (otCoapServerAddResource(sInstance, sCoapResource) != kThreadError_None) {
 		uartCostumeWritet("Resource not created");
 		free(sCoapResource);
 		return 0;
@@ -105,9 +78,65 @@ otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
 	}
 }
 
-void coapServerRemoveResource(otInstance *sInstance, otCoapResource *sCoapResource){
+void coapServerRemoveResource(otInstance *sInstance, otCoapResource *sCoapResource) {
 	otCoapServerRemoveResource(sInstance, sCoapResource);
 	free(sCoapResource);
+}
+
+void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo) {
+
+	uint16_t length, offset;
+	const char *text = "%04x => Response back of: %s";
+	char *buf;
+	char *buffer;
+	contextInfo *sInstanceInfo = aContext;
+	otInstance *sInstance = sInstanceInfo->info;
+
+	coapServerPrintRequest(aHeader, "mytest");
+
+	//read message
+	length = otGetMessageLength(aMessage) - otGetMessageOffset(aMessage);
+	offset = otGetMessageOffset(aMessage);
+
+	buffer = malloc(sizeof(char) * (length + 1));
+	otReadMessage(aMessage, offset, buffer, length);
+
+	//be sure that string end with null character
+	buffer[length] = '\0';
+	uartCostumeWritef("\tPayload: %s: ", buffer);
+
+	//create response message
+	buf = malloc(sizeof(char) * (length + strlen(text) + 1));
+	sprintf(buf, text, otGetRloc16(sInstance), buffer);
+	free(buffer);
+
+	//send response message
+	coapServerSendResponse(sInstance, aHeader, aMessageInfo, buf, strlen(buf));
+	free(buf);
+}
+
+void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo) {
+	coapServerPrintRequest(aHeader, "enabled");
+
+	static uint8_t state = 1;
+	uint16_t offset;
+	contextInfo *sInstanceInfo = aContext;
+	otInstance *sInstance = sInstanceInfo->info;
+	otCoapCode code = otCoapHeaderGetCode(aHeader);
+
+	//set state with put request, return always current/new state
+	if (code == kCoapRequestPut) {
+		offset = otGetMessageOffset(aMessage);
+		otReadMessage(aMessage, offset, &state, 1);
+		state &= 1;
+		uartCostumeWritef("New state: %i", state);
+	}
+
+	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &state, 1);
+
+	(void) aMessage;
 }
 
 void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
@@ -133,5 +162,5 @@ void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
 		uartCostumeWritef("***UNKOWN: /%s", aUriPath)
 		break;
 	}
-	(void)aUriPath;
+	(void) aUriPath;
 }
