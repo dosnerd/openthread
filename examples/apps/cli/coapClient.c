@@ -15,7 +15,7 @@
 #include <openthread-message.h>
 
 
-void coapClientTransmit(otIp6Address to, otCoapCode aCode, const char *aUriPath, const char *message, otCoapResponseHandler aHandler) {
+void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode, const char *aUriPath, const char *message, otCoapResponseHandler aHandler) {
 	int i;
 	otCoapOption contentType;
 	otIp6Address sock;
@@ -33,13 +33,14 @@ void coapClientTransmit(otIp6Address to, otCoapCode aCode, const char *aUriPath,
 	contentType.mNumber = kCoapOptionContentFormat;
 	contentType.mLength = 2;
 	contentType.mValue = 0;
+	(void)contentType;
 
 	//adding content-type and set payload marker
-	otCoapHeaderAppendOption(&aCoapHeader, &contentType);
+	//otCoapHeaderAppendOption(&aCoapHeader, &contentType);
 	otCoapHeaderSetPayloadMarker(&aCoapHeader);
 
 	//create and write message
-	otMessage aMessage = otCoapNewMessage(otStaticInstance(STATIC_GET), &aCoapHeader);
+	otMessage aMessage = otCoapNewMessage(sInstance, &aCoapHeader);
 	otAppendMessage(aMessage, message, strlen(message));
 
 	//set address to 0, so it will be filled in by a lower layer
@@ -55,10 +56,9 @@ void coapClientTransmit(otIp6Address to, otCoapCode aCode, const char *aUriPath,
 	aMessageInfo.mHopLimit = 10;
 	aMessageInfo.mInterfaceId = 0;
 	aMessageInfo.mLinkInfo = 0;
-	//otMessageInfo * const pMessageInfo = &aMessageInfo;
 
 	//sending request and clean up
-	err = otCoapSendRequest(otStaticInstance(STATIC_GET), aMessage, &aMessageInfo, aHandler, 0);
+	err = otCoapSendRequest(sInstance, aMessage, &aMessageInfo, aHandler, sInstance);
 	switch (err) {
 	case kThreadError_None:
 		break;

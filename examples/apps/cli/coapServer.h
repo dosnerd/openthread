@@ -16,13 +16,17 @@
 
 #include <openthread.h>
 #include <openthread-coap.h>
+#include "base.h"
 
 #define OTCOAP_PORT OT_DEFAULT_COAP_PORT
 
-
 void coapServerStart(otInstance *sInstance);
-void coapServerTestRequestHandler (void *aContext, otCoapHeader *aHeader, otMessage aMessage,
-                                     const otMessageInfo *aMessageInfo);
+otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
+		otCoapRequestHandler mHandler, contextInfo *mContextInfo);
+void coapServerRemoveResource(otInstance *sInstance, otCoapResource *sCoapResource);
+
+void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo);
 void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath);
 
 #endif /* EXAMPLES_APPS_CLI_INCLUDES_PROGRAM_H_ */

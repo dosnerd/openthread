@@ -91,7 +91,7 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", RouterInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			coapClientTransmit(address, kCoapRequestGet, resource, message, &responseHandler);
+			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message, &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -109,7 +109,7 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
-			coapClientTransmit(address, kCoapRequestGet, resource, message, &responseHandler);
+			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message, &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}

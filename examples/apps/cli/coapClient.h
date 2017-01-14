@@ -17,6 +17,6 @@
 #include <openthread.h>
 #include <openthread-coap.h>
 
-void coapClientTransmit(otIp6Address, otCoapCode, const char *, const char *, otCoapResponseHandler);
+void coapClientTransmit(otInstance *sInstance, otIp6Address, otCoapCode, const char *, const char *, otCoapResponseHandler);
 
 #endif /* EXAMPLES_APPS_NCP_CLI_COAPCLIENT_H_ */

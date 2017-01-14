@@ -28,12 +28,15 @@
 //based of cli.cpp
 struct Command {
 	const char *mName;                         ///< A pointer to the command string.
-	void (*mCommand)(int argc, char *argv[]);  ///< A function pointer to process the command.
+	void (*mCommand)(int argc, char *argv[], otInstance *sInstance);  ///< A function pointer to process the command.
 };
 
 //const struct Command sCommands[];
-const struct Command sCommands[] = { { "echo", &ProcessEcho }, { "broadcast", &ProcessBroadcast }, {
-		"send", &ProcessSend }, };
+const struct Command sCommands[] = {
+		{ "echo", &ProcessEcho },
+		{ "broadcast", &ProcessBroadcast },
+		{"send", &ProcessSend },
+};
 
 char *uartCostumeGetInputBuffer() {
 	static char buffer[UART_INPUT_BUFFER];
@@ -45,7 +48,7 @@ uint16_t *uartCostumeGetInputBufferLength() {
 }
 
 //based of cli.cpp
-void uartCostumeProcessLine(char *buffer, uint16_t bufferLen) {
+void uartCostumeProcessLine(char *buffer, uint16_t bufferLen, otInstance *sInstance) {
 	char *argv[MAX_ARGS];
 	int argc = 0;
 	char *cmd;
@@ -71,7 +74,7 @@ void uartCostumeProcessLine(char *buffer, uint16_t bufferLen) {
 
 	for (unsigned int i = 0; i < sizeof(sCommands) / sizeof(sCommands[0]); i++) {
 		if (strcmp(cmd, sCommands[i].mName) == 0) {
-			(*sCommands[i].mCommand)(argc, argv);
+			(*sCommands[i].mCommand)(argc, argv, sInstance);
 			uartCostumeWritet("Done");
 			return;
 		}
@@ -79,7 +82,7 @@ void uartCostumeProcessLine(char *buffer, uint16_t bufferLen) {
 }
 
 //based on cli_uart.cpp
-void uartCostumeProcess() {
+void uartCostumeProcess(otInstance *sInstance) {
 	char aBuf;
 	char *buffer = uartCostumeGetInputBuffer();
 	uint16_t *length = uartCostumeGetInputBufferLength();
@@ -95,7 +98,7 @@ void uartCostumeProcess() {
 		case '\r':
 			if (*length > 0) {
 				buffer[*length] = '\0';
-				uartCostumeProcessLine(buffer, *length);
+				uartCostumeProcessLine(buffer, *length, sInstance);
 				*length = 0;
 			}
 			break;
@@ -130,7 +133,15 @@ void uartCostumeWritet(const char *text) {
 	hw_uart_write_buffer(HW_UART1, "\r\n", 2);
 }
 
-void ProcessBroadcast(int argc, char *argv[]) {
+void ProcessEcho(int argc, char *argv[], otInstance *sInstance) {
+	uartCostumeWritet("ECHO: ");
+	for (int i = 0; i < argc; ++i) {
+		uartCostumeWritet(argv[i]);
+	}
+	(void)sInstance;
+}
+
+void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
 	if (argc > 1) {
 		char *buffer = malloc(strlen(argv[1]));
 		strcpy(buffer, argv[1]);
@@ -141,20 +152,14 @@ void ProcessBroadcast(int argc, char *argv[]) {
 			strcat(buffer, argv[i]);
 		}
 		uartCostumeWritef("broadcast: %s", buffer)
-		printList(otStaticInstance(STATIC_GET), argv[0], buffer);
+		printList(sInstance, argv[0], buffer);
 		free(buffer);
 	} else {
-		printList(otStaticInstance(STATIC_GET), "mytest", "PING");
+		printList(sInstance, "mytest", "PING");
 	}
 }
 
-void ProcessEcho(int argc, char *argv[]) {
-	uartCostumeWritet("ECHO: ");
-	for (int i = 0; i < argc; ++i) {
-		uartCostumeWritet(argv[i]);
-	}
-}
-void ProcessSend(int argc, char *argv[]) {
+void ProcessSend(int argc, char *argv[], otInstance *sInstance) {
 	otIp6Address address;
 	char *buffer;
 
@@ -175,7 +180,7 @@ void ProcessSend(int argc, char *argv[]) {
 		}
 		uartCostumeWritef("send to %s: %s",argv[0], buffer)
 
-		coapClientTransmit(address, kCoapRequestGet, argv[1], buffer, &responseHandler);
+		coapClientTransmit(sInstance, address, kCoapRequestGet, argv[1], buffer, &responseHandler);
 		free(buffer);
 	} else {
 		uartCostumeWritet("Not enough arguments. Use <addr> <resource> message...");

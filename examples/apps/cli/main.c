@@ -81,9 +81,6 @@ int main(int argc, char *argv[])
     diagInit(sInstance);
 #endif
 
-    //setting static instance
-    otStaticInstance(sInstance);
-
     //setup program
    setup(sInstance);
 
@@ -94,7 +91,7 @@ int main(int argc, char *argv[])
 
         //run loop in program
         loop(sInstance);
-        uartCostumeProcess();
+        uartCostumeProcess(sInstance);
     }
 
     // otInstanceFinalize(sInstance);

@@ -39,11 +39,11 @@ void otSetUp(otInstance *sInstance, uint8_t channel, otPanId panId){
         otThreadStart(sInstance);
 }
 
-otInstance *otStaticInstance(otInstance *instance){
+/*otInstance *otStaticInstance(otInstance *instance){
 	static otInstance *sInstance;
 	if (instance != 0){
 		sInstance = instance;
 	}
 
 	return sInstance;
-}
+}*/

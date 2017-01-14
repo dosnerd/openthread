@@ -24,12 +24,12 @@
 
 char *uartCostumeGetInputBuffer();
 uint16_t *uartCostumeGetInputBufferLength();
-void uartCostumeProcess();
+void uartCostumeProcess(otInstance *sInstance);
 void uartCostumeWrite(const char *buf, uint16_t len);
 void uartCostumeWritet(const char *text);
 
-void ProcessBroadcast(int argc, char *argv[]);
-void ProcessEcho(int argc, char *argv[]);
-void ProcessSend(int argc, char *argv[]);
+void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance);
+void ProcessEcho(int argc, char *argv[], otInstance *sInstance);
+void ProcessSend(int argc, char *argv[], otInstance *sInstance);
 
 #endif /* EXAMPLES_APPS_CLI_UARTCOSTUMEHANDLER_H_ */
