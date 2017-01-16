@@ -31,6 +31,10 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 		const otMessageInfo *aMessageInfo);
 void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 		const otMessageInfo *aMessageInfo);
+void coapServerDescriptionRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo);
+void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo);
 
 void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath);
 

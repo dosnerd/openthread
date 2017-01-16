@@ -25,5 +25,6 @@ typedef struct contextInfo {
 } contextInfo;
 
 void otSetUp(otInstance *sInstance, uint8_t channel, otPanId panId);
+uint8_t otAvansState(uint8_t state);
 
 #endif /* EXAMPLES_APPS_CLI_BASE_H_ */

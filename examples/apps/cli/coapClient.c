@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <openthread-message.h>
 
-
-void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode, const char *aUriPath, const char *message, otCoapResponseHandler aHandler) {
+void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode,
+		const char *aUriPath, const void *message, uint16_t len, otCoapResponseHandler aHandler) {
 	int i;
 	otCoapOption contentType;
 	otIp6Address sock;
@@ -33,7 +33,7 @@ void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode
 	contentType.mNumber = kCoapOptionContentFormat;
 	contentType.mLength = 2;
 	contentType.mValue = 0;
-	(void)contentType;
+	(void) contentType;
 
 	//adding content-type and set payload marker
 	//otCoapHeaderAppendOption(&aCoapHeader, &contentType);
@@ -41,7 +41,7 @@ void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode
 
 	//create and write message
 	otMessage aMessage = otCoapNewMessage(sInstance, &aCoapHeader);
-	otAppendMessage(aMessage, message, strlen(message));
+	otAppendMessage(aMessage, message, len);
 
 	//set address to 0, so it will be filled in by a lower layer
 	for (i = 0; i < OT_IP6_ADDRESS_SIZE; i++) {
@@ -66,7 +66,8 @@ void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode
 		uartCostumeWritet("<REQUEST>No buff\n");
 		break;
 	default:
-		uartCostumeWritef("<REQUEST>Unknown error: %i", err);
+		uartCostumeWritef("<REQUEST>Unknown error: %i", err)
+		;
 		break;
 	}
 

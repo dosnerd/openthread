@@ -161,5 +161,5 @@ void PlatformProcessDrivers(otInstance *aInstance)
     da15000AlarmProcess(aInstance);
     //da15000UartProcess();
     da15000RadioProcess(aInstance);
-    ExampleProcess(aInstance);
+    //ExampleProcess(aInstance);
 }

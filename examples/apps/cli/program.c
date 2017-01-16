@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <string.h>
+
 #define HostSwap16(v)						\
 (((v & 0x00ffU) << 8) & 0xff00) |			\
 (((v & 0xff00U) >> 8) & 0x00ff)
@@ -92,7 +94,7 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
 			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
-					&responseHandler);
+					strlen(message), &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
@@ -111,24 +113,21 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
 			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
-					&responseHandler);
+					strlen(message), &responseHandler);
 			//sendMessage(sInstance, address);
 		}
 	}
 }
 
-uint16_t a = 1;
-uint16_t b = 1;
-
 void setup(otInstance *sInstance) {
 	contextInfo *instanceInfo = malloc(sizeof(contextInfo));
-	//contextInfo *descriptionInfo = malloc(sizeof(contextInfo));
+	contextInfo *descriptionInfo = malloc(sizeof(contextInfo));
 
 	instanceInfo->info = sInstance;
 	instanceInfo->next = 0;
 
-	//descriptionInfo->info = "A standard, not installed, device with pwm test running";
-	//descriptionInfo->next = instanceInfo;
+	descriptionInfo->info = "A standard, not installed, device with pwm test running";
+	descriptionInfo->next = instanceInfo;
 
 	//setup and start openthread
 	otSetUp(sInstance, 13, 0xface);
@@ -136,7 +135,9 @@ void setup(otInstance *sInstance) {
 
 	coapServerStart(sInstance);
 	coapServerCreateResource(sInstance, "enabled", coapServerEnabledRequest, instanceInfo);
-	//coapServerCreateResource(sInstance, "enabled", coapServerEnabledRequest, instanceInfo);
+	coapServerCreateResource(sInstance, "description", coapServerDescriptionRequest,
+			descriptionInfo);
+	coapServerCreateResource(sInstance, "button", coapServerButtonRequest, instanceInfo);
 
 	uartCostumeWritef("CoAP server port: %i", OTCOAP_PORT);
 
@@ -150,18 +151,50 @@ void setup(otInstance *sInstance) {
 	//Initialize GPIO pin P4_0 as GPIO using PWM timer 2
 	hw_gpio_set_pin_function(HW_GPIO_PORT_4, HW_GPIO_PIN_0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_PWM2);
 
+	hw_gpio_set_pin_function(HW_GPIO_PORT_1, HW_GPIO_PIN_6, HW_GPIO_MODE_INPUT_PULLUP,
+			HW_GPIO_FUNC_GPIO);
 	//prevent unsused variable error
 	//(void)sInstance;
 }
 
+uint16_t a = 1;
+uint16_t b = 1;
 void loop(otInstance *sInstance) {
 	//prevent unsused variable error
 	(void) sInstance;
+	otIp6Address address;
+	static uint8_t state = 1;
+
+	if (a > 32755) {
+		a = 0;
+		b++;
+
+		if (b > 1) {
+			b = 0;
+
+			if (!hw_gpio_get_pin_status(HW_GPIO_PORT_1, HW_GPIO_PIN_6)) {
+				if (otIp6AddressFromString(uartCostumeGetInputBuffer(), &address)
+						!= kThreadError_None) {
+					uartCostumeWritet("\nInvalid address given");
+					return;
+				}
+
+				coapClientTransmit(sInstance, address, kCoapRequestPut, "enabled", &state,
+						1, responseHandler);
+				state = !state;
+				uartCostumeWritet("Request transmitted");
+			}
+
+		}
+	} else {
+		a++;
+	}
 
 	//Start of DirtyPWM loop
 	if (skipCounter >= skipSteps) {
 		skipCounter = 0;
 		if (isIncrementing) {
+
 			if (pwmDutyCycle <= (255 - stepSize)) {
 				pwmDutyCycle += stepSize;
 				hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);

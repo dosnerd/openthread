@@ -14,21 +14,6 @@
 #include <openthread.h>
 #include "base.h"
 
-
-/*void cliPrint(const char *aFormat, ...)
-{
-        //print to cli if enabled
-#if OPENTHREAD_ENABLE_DEFAULT_LOGGING
-	va_list args;
-	va_start(args, aFormat);
-	otPlatLog(0, 0, aFormat, args);
-	va_end(args);
-#else
-	(void)aLogLevel;
-	(void)aFormat;
-#endif // OPENTHREAD_ENABLE_DEFAULT_LOGGING
-}*/
-
 void otSetUp(otInstance *sInstance, uint8_t channel, otPanId panId){
         //setup openthread
         otSetChannel(sInstance, channel);
@@ -39,11 +24,11 @@ void otSetUp(otInstance *sInstance, uint8_t channel, otPanId panId){
         otThreadStart(sInstance);
 }
 
-/*otInstance *otStaticInstance(otInstance *instance){
-	static otInstance *sInstance;
-	if (instance != 0){
-		sInstance = instance;
+uint8_t otAvansState(uint8_t value){
+	static uint8_t state = 1;
+	if (value < 2) {
+		state = value;
 	}
 
-	return sInstance;
-}*/
+	return state;
+}

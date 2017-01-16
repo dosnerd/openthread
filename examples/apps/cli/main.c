@@ -44,6 +44,8 @@
 #include "uartCostumeHandler.h"
 #include "program.h"
 
+void ExampleProcess(otInstance *aInstance);
+
 void otSignalTaskletPending(otInstance *aInstance)
 {
     (void)aInstance;
@@ -88,6 +90,9 @@ int main(int argc, char *argv[])
     {
         otProcessQueuedTasklets(sInstance);
         PlatformProcessDrivers(sInstance);
+        if (otAvansState(2)){
+        	ExampleProcess(sInstance);
+        }
 
         //run loop in program
         loop(sInstance);

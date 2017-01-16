@@ -6,8 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <bsp_defaults.h>
+#include <bsp_definitions.h>
+#include <hw_gpio.h>
+
 #include "coapServer.h"
 #include <openthread-message.h>
+#include "base.h"
 
 #include "uartCostumeHandler.h"
 
@@ -120,7 +125,7 @@ void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage a
 		const otMessageInfo *aMessageInfo) {
 	coapServerPrintRequest(aHeader, "enabled");
 
-	static uint8_t state = 1;
+	uint8_t state = otAvansState(2);
 	uint16_t offset;
 	contextInfo *sInstanceInfo = aContext;
 	otInstance *sInstance = sInstanceInfo->info;
@@ -128,13 +133,51 @@ void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage a
 
 	//set state with put request, return always current/new state
 	if (code == kCoapRequestPut) {
+		//reading message
 		offset = otGetMessageOffset(aMessage);
 		otReadMessage(aMessage, offset, &state, 1);
+
+		//saving data
 		state &= 1;
+		otAvansState(state);
 		uartCostumeWritef("New state: %i", state);
 	}
 
+	//send response
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &state, 1);
+
+	(void) aMessage;
+}
+
+void coapServerDescriptionRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo) {
+	coapServerPrintRequest(aHeader, "description");
+
+	contextInfo *sInfo = aContext;
+	const char *description = sInfo->info;
+	otInstance *sInstance = sInfo->next->info;
+	otCoapCode code = otCoapHeaderGetCode(aHeader);
+
+	//set state with put request, return always current/new state
+	if (code == kCoapRequestGet) {
+		coapServerSendResponse(sInstance, aHeader, aMessageInfo, description, strlen(description));
+	} else {
+		const char *m = "This method is not allowed here";
+		coapServerSendResponse(sInstance, aHeader, aMessageInfo, m, strlen(m));
+	}
+
+	(void) aMessage;
+}
+
+void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo) {
+	coapServerPrintRequest(aHeader, "button");
+
+	contextInfo *sInfo = aContext;
+	otInstance *sInstance = sInfo->info;
+	bool status = !hw_gpio_get_pin_status(HW_GPIO_PORT_1, HW_GPIO_PIN_6);
+
+	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &status, 1);
 
 	(void) aMessage;
 }
