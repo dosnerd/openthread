@@ -17,7 +17,6 @@
 void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode,
 		const char *aUriPath, const void *message, uint16_t len, otCoapResponseHandler aHandler) {
 	int i;
-	otCoapOption contentType;
 	otIp6Address sock;
 	otMessageInfo aMessageInfo;
 	ThreadError err;
