@@ -76,15 +76,17 @@ void responseHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 	(void) aResult;
 }
 
-void printList(otInstance *sInstance, const char *resource, const char *message) {
+void broadcast(otInstance *sInstance, const char *resource, const char *message) {
 	otRouterInfo RouterInfo;
 	otChildInfo ChildInfo;
 
+	//find and send to all routers
 	for (uint8_t i = 0;; i++) {
 		if (otGetRouterInfo(sInstance, i, &RouterInfo) != kThreadError_None) {
 			break;
 		}
 
+		//if router exists
 		if (RouterInfo.mAllocated) {
 			char sAddress[31];
 			otIp6Address address;
@@ -93,17 +95,19 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", RouterInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
+			//transmit request
 			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
 					strlen(message), &responseHandler);
-			//sendMessage(sInstance, address);
 		}
 	}
 
+	//find and send to all childs
 	for (uint8_t i = 0;; i++) {
 		if (otGetChildInfoByIndex(sInstance, i, &ChildInfo) != kThreadError_None) {
 			return;
 		}
 
+		//check if child exists
 		if (ChildInfo.mTimeout > 0) {
 			char sAddress[31];
 			otIp6Address address;
@@ -112,9 +116,9 @@ void printList(otInstance *sInstance, const char *resource, const char *message)
 			sprintf(sAddress, "fdde:ad00:beef:0:0:ff:fe00:%04x", ChildInfo.mRloc16);
 			SucceedOrPrint(otIp6AddressFromString(sAddress, &address), "Can not parse address");
 
+			//transmit request
 			coapClientTransmit(sInstance, address, kCoapRequestGet, resource, message,
 					strlen(message), &responseHandler);
-			//sendMessage(sInstance, address);
 		}
 	}
 }
@@ -123,6 +127,7 @@ void setup(otInstance *sInstance) {
 	contextInfo *instanceInfo = malloc(sizeof(contextInfo));
 	contextInfo *descriptionInfo = malloc(sizeof(contextInfo));
 
+	//fill in some info for some coap responses
 	instanceInfo->info = sInstance;
 	instanceInfo->next = 0;
 
@@ -133,7 +138,10 @@ void setup(otInstance *sInstance) {
 	otSetUp(sInstance, 13, 0xface);
 	uartCostumeWritet("ot setup done");
 
+	//start coap server
 	coapServerStart(sInstance);
+
+	//add resources to coap server
 	coapServerCreateResource(sInstance, "enabled", coapServerEnabledRequest, instanceInfo);
 	coapServerCreateResource(sInstance, "description", coapServerDescriptionRequest,
 			descriptionInfo);
@@ -151,10 +159,13 @@ void setup(otInstance *sInstance) {
 	//Initialize GPIO pin P4_0 as GPIO using PWM timer 2
 	hw_gpio_set_pin_function(HW_GPIO_PORT_4, HW_GPIO_PIN_0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_PWM2);
 
+	//initialize push button
 	hw_gpio_set_pin_function(HW_GPIO_PORT_1, HW_GPIO_PIN_6, HW_GPIO_MODE_INPUT_PULLUP,
 			HW_GPIO_FUNC_GPIO);
+
+
 	//prevent unsused variable error
-	//(void)sInstance;
+	(void)sInstance;
 }
 
 uint16_t a = 1;
@@ -165,6 +176,7 @@ void loop(otInstance *sInstance) {
 	otIp6Address address;
 	static uint8_t state = 1;
 
+	//some dirty code that runs every few secondes
 	if (a > 32755) {
 		a = 0;
 		b++;
@@ -172,13 +184,17 @@ void loop(otInstance *sInstance) {
 		if (b > 1) {
 			b = 0;
 
+			//check if push button pressed
 			if (!hw_gpio_get_pin_status(HW_GPIO_PORT_1, HW_GPIO_PIN_6)) {
+
+				//try to convert address
 				if (otIp6AddressFromString(uartCostumeGetInputBuffer(), &address)
 						!= kThreadError_None) {
 					uartCostumeWritet("\nInvalid address given");
 					return;
 				}
 
+				//transmit request for disable/enable device
 				coapClientTransmit(sInstance, address, kCoapRequestPut, "enabled", &state,
 						1, responseHandler);
 				state = !state;

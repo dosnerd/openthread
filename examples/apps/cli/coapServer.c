@@ -46,7 +46,6 @@ void coapServerSendResponse(otInstance *sInstance, otCoapHeader *aHeader,
 		break;
 	default:
 		uartCostumeWritef("<RESPONSE>Unknown error: %i", err)
-		;
 		break;
 	}
 }
@@ -60,7 +59,7 @@ void coapServerStart(otInstance *sInstance) {
 	SucceedOrPrint(otCoapServerSetPort(sInstance, OTCOAP_PORT), "Can not set port");
 	SucceedOrPrint(otCoapServerStart(sInstance), "Can not start Coap server");
 
-	(void) info;
+	//add test resource
 	coapServerCreateResource(sInstance, "mytest", coapServerTestRequestHandler, info);
 }
 
@@ -68,12 +67,14 @@ otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
 		otCoapRequestHandler mHandler, contextInfo *mContextInfo) {
 	otCoapResource *sCoapResource;
 
-	sCoapResource = calloc(1, sizeof(otCoapResource));
+	//fill in resource data
+	sCoapResource = calloc(1, sizeof(otCoapResource));//resource may not be removed after method, to dynamic allocation
 	sCoapResource->mUriPath = uri;
 	sCoapResource->mHandler = mHandler;
 	sCoapResource->mNext = 0;
 	sCoapResource->mContext = mContextInfo;
 
+	//add resource
 	if (otCoapServerAddResource(sInstance, sCoapResource) != kThreadError_None) {
 		uartCostumeWritet("Resource not created");
 		free(sCoapResource);
@@ -84,6 +85,7 @@ otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
 }
 
 void coapServerRemoveResource(otInstance *sInstance, otCoapResource *sCoapResource) {
+	//remove and free resource
 	otCoapServerRemoveResource(sInstance, sCoapResource);
 	free(sCoapResource);
 }
@@ -98,12 +100,12 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	contextInfo *sInstanceInfo = aContext;
 	otInstance *sInstance = sInstanceInfo->info;
 
+	//inform through uart that a request is received
 	coapServerPrintRequest(aHeader, "mytest");
 
 	//read message
 	length = otGetMessageLength(aMessage) - otGetMessageOffset(aMessage);
 	offset = otGetMessageOffset(aMessage);
-
 	buffer = malloc(sizeof(char) * (length + 1));
 	otReadMessage(aMessage, offset, buffer, length);
 
@@ -116,7 +118,7 @@ void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessa
 	sprintf(buf, text, otGetRloc16(sInstance), buffer);
 	free(buffer);
 
-	//send response message
+	//send response
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, buf, strlen(buf));
 	free(buf);
 }
@@ -145,8 +147,6 @@ void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage a
 
 	//send response
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &state, 1);
-
-	(void) aMessage;
 }
 
 void coapServerDescriptionRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
@@ -175,8 +175,9 @@ void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aM
 
 	contextInfo *sInfo = aContext;
 	otInstance *sInstance = sInfo->info;
-	bool status = !hw_gpio_get_pin_status(HW_GPIO_PORT_1, HW_GPIO_PIN_6);
+	bool status = !hw_gpio_get_pin_status(HW_GPIO_PORT_1, HW_GPIO_PIN_6);//get low active state of push button
 
+	//send response
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &status, 1);
 
 	(void) aMessage;
@@ -185,6 +186,7 @@ void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aM
 void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {
 	otCoapCode coapCode = otCoapHeaderGetCode(aHeader);
 
+	//inform, through uart, the type of request and the uri-path
 	switch (coapCode) {
 	case kCoapRequestGet:
 		uartCostumeWritef("> GET: /%s", aUriPath)

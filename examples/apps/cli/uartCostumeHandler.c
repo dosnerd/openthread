@@ -31,7 +31,7 @@ struct Command {
 	void (*mCommand)(int argc, char *argv[], otInstance *sInstance);  ///< A function pointer to process the command.
 };
 
-//const struct Command sCommands[];
+//list of commands
 const struct Command sCommands[] = {
 		{ "echo", &ProcessEcho },
 		{ "broadcast", &ProcessBroadcast },
@@ -127,16 +127,19 @@ void uartCostumeProcess(otInstance *sInstance) {
 void uartCostumeWrite(const char *buf, uint16_t len) {
 	(void) buf;
 	(void) len;
+	//write to uart buffer
 	hw_uart_write_buffer(HW_UART1, buf, len);
 }
 
 void uartCostumeWritet(const char *text) {
 	(void) text;
+	//write to uart buffer, with a newline
 	hw_uart_write_buffer(HW_UART1, text, strlen(text));
 	hw_uart_write_buffer(HW_UART1, "\r\n", 2);
 }
 
 void ProcessEcho(int argc, char *argv[], otInstance *sInstance) {
+	//write echo with all the given arguments
 	uartCostumeWritet("ECHO: ");
 	for (int i = 0; i < argc; ++i) {
 		uartCostumeWritet(argv[i]);
@@ -145,7 +148,9 @@ void ProcessEcho(int argc, char *argv[], otInstance *sInstance) {
 }
 
 void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
+	//if not enough arguments, broadcast PING, als broadcast arguments
 	if (argc > 1) {
+		//join arguments
 		char *buffer = malloc(strlen(argv[1]));
 		strcpy(buffer, argv[1]);
 		for (int i = 2; i < argc; ++i) {
@@ -154,11 +159,15 @@ void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
 			strcat(buffer, " \0");
 			strcat(buffer, argv[i]);
 		}
+
+		//write the message
 		uartCostumeWritef("broadcast: %s", buffer)
-		printList(sInstance, argv[0], buffer);
+
+		//broadcast message, with the first arguments as resource
+		broadcast(sInstance, argv[0], buffer);
 		free(buffer);
 	} else {
-		printList(sInstance, "mytest", "PING");
+		broadcast(sInstance, "mytest", "PING");
 	}
 }
 
@@ -166,13 +175,15 @@ void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code)
 	otIp6Address address;
 	char *buffer;
 
+	//send request if enough arguments
 	if (argc > 2) {
-		//make Ip6Address
+		//create Ip6Address
 		if (otIp6AddressFromString(argv[0], &address) != kThreadError_None) {
 			uartCostumeWritet("Can not parse address");
 			return;
 		}
 
+		//join arguments
 		buffer = malloc(strlen(argv[2]));
 		strcpy(buffer, argv[2]);
 		for (int i = 3; i < argc; ++i) {
@@ -181,8 +192,11 @@ void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code)
 			strcat(buffer, " \0");
 			strcat(buffer, argv[i]);
 		}
+
+		//write resource and message
 		uartCostumeWritef("send to %s: %s", argv[0], buffer)
 
+		//send request to given address, with the second argument as resource
 		coapClientTransmit(sInstance, address, code, argv[1], buffer, strlen(buffer), &responseHandler);
 		free(buffer);
 	} else {

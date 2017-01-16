@@ -26,6 +26,8 @@ void otSetUp(otInstance *sInstance, uint8_t channel, otPanId panId){
 
 uint8_t otAvansState(uint8_t value){
 	static uint8_t state = 1;
+
+	//when valid value, change value
 	if (value < 2) {
 		state = value;
 	}

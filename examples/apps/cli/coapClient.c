@@ -28,15 +28,6 @@ void coapClientTransmit(otInstance *sInstance, otIp6Address to, otCoapCode aCode
 	otCoapHeaderSetMessageId(&aCoapHeader, rand());
 	SucceedOrPrint(otCoapHeaderAppendUriPathOptions(&aCoapHeader, aUriPath),
 			"Can not add Uri Path to option")
-
-	//create content-type option
-	contentType.mNumber = kCoapOptionContentFormat;
-	contentType.mLength = 2;
-	contentType.mValue = 0;
-	(void) contentType;
-
-	//adding content-type and set payload marker
-	//otCoapHeaderAppendOption(&aCoapHeader, &contentType);
 	otCoapHeaderSetPayloadMarker(&aCoapHeader);
 
 	//create and write message

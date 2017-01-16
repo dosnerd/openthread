@@ -90,12 +90,16 @@ int main(int argc, char *argv[])
     {
         otProcessQueuedTasklets(sInstance);
         PlatformProcessDrivers(sInstance);
+
+        //run example (blinking led) if allowed
         if (otAvansState(2)){
         	ExampleProcess(sInstance);
         }
 
         //run loop in program
         loop(sInstance);
+
+        //process uart input
         uartCostumeProcess(sInstance);
     }
 
