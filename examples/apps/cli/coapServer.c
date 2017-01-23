@@ -9,6 +9,9 @@
 #include <bsp_defaults.h>
 #include <bsp_definitions.h>
 #include <hw_gpio.h>
+#include "IODevices/RgbLed.h"
+#include <hw_tempsens.h>
+#include <hw_gpadc.h>
 
 #include "coapServer.h"
 #include <openthread-message.h>
@@ -181,6 +184,93 @@ void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aM
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, &status, 1);
 
 	(void) aMessage;
+}
+
+void coapServerTemperatureRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo){
+	coapServerPrintRequest(aHeader, "temperature");
+
+	contextInfo *sInfo = aContext;
+	otInstance *sInstance = sInfo->info;
+    hw_gpadc_set_input(HW_GPADC_INPUT_SE_TEMPSENS);
+	int temperature = hw_tempsens_read();
+
+	char *message;
+	message = malloc(sizeof(char) * 4);
+	sprintf(message, "%d", temperature);
+	uartCostumeWritef("%i, %s", temperature, message);
+	coapServerSendResponse(sInstance, aHeader, aMessageInfo, message, strlen(message));
+
+	(void) aMessage;
+}
+
+void coapServerSensorReadRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo){
+	coapServerPrintRequest(aHeader, "sensorread");
+
+	contextInfo *sInfo = aContext;
+	otInstance *sInstance = sInfo->info;
+	uint16_t sensorValue = 0;
+    hw_gpadc_set_input(HW_GPADC_INPUT_SE_P07);
+    hw_gpadc_adc_measure();
+    sensorValue = hw_gpadc_get_raw_value();
+
+	char *message;
+	message = malloc(sizeof(char) * 4);
+	sprintf(message, "%d", sensorValue);
+	uartCostumeWritef("%i, %s", sensorValue, message);
+	coapServerSendResponse(sInstance, aHeader, aMessageInfo, message, strlen(message));
+
+	(void) aMessage;
+}
+
+void coapServerRgbLedRequest(void *aContext, otCoapHeader *aHeader,
+		otMessage aMessage, const otMessageInfo *aMessageInfo) {
+	coapServerPrintRequest(aHeader, "rgbled");
+
+	uint16_t length, offset;
+	char *buffer;
+	contextInfo *sInstanceInfo = aContext;
+	otInstance *sInstance = sInstanceInfo->info;
+	otCoapCode code = otCoapHeaderGetCode(aHeader);
+
+	//read message
+	length = otGetMessageLength(aMessage) - otGetMessageOffset(aMessage);
+	offset = otGetMessageOffset(aMessage);
+	buffer = malloc(sizeof(char) * (length + 1));
+	otReadMessage(aMessage, offset, buffer, length);
+
+	//be sure that string end with null character
+	buffer[length] = '\0';
+	uartCostumeWritef("\tPayload: %s", buffer);
+
+	//set state with put request, return always current/new state
+	if (code == kCoapRequestPut) {
+		if(strlen(buffer) == 6){
+			uint64_t value = (int)strtol(buffer, NULL, 16);
+			uint8_t rVal = (value & 0xFF0000) >> 16;
+			uint8_t gVal = (value & 0x00FF00) >> 8;
+			uint8_t bVal = (value & 0x0000FF);
+			setRgb(rVal,gVal,bVal);
+			uartCostumeWritef("RGB set R:%i, G:%i, B:%i", rVal, gVal, bVal);
+
+			//send response
+			const char *m = "OK";
+			coapServerSendResponse(sInstance, aHeader, aMessageInfo, m, strlen(m));
+		}
+		else{
+			uartCostumeWritef("input incorrect, bouncing");
+			const char *m = "Invalid input for RGB";
+			coapServerSendResponse(sInstance, aHeader, aMessageInfo, m, strlen(m));
+		}
+	}
+	else{
+
+		//send response
+		const char *m = "Invalid method for rgbled";
+		coapServerSendResponse(sInstance, aHeader, aMessageInfo, m, strlen(m));
+	}
+	free(buffer);
 }
 
 void coapServerPrintRequest(otCoapHeader *aHeader, const char *aUriPath) {

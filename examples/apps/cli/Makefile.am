@@ -55,6 +55,7 @@ SOURCES_COMMON                                                         = \
     base.c                                                               \
     program.c                                                            \
     main.c                                                               \
+    IODevices/RgbLed.c                                                   \
     $(NULL)
 
 if OPENTHREAD_ENABLE_BUILTIN_MBEDTLS

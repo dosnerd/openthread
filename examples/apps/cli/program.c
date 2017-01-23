@@ -14,8 +14,9 @@
 
 #include <bsp_defaults.h>
 #include <bsp_definitions.h>
-#include <hw_gpio.h>
-#include <hw_timer2.h>
+#include "IODevices/RgbLed.h"
+#include <hw_tempsens.h>
+#include <hw_gpadc.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -146,18 +147,25 @@ void setup(otInstance *sInstance) {
 	coapServerCreateResource(sInstance, "description", coapServerDescriptionRequest,
 			descriptionInfo);
 	coapServerCreateResource(sInstance, "button", coapServerButtonRequest, instanceInfo);
+	coapServerCreateResource(sInstance, "rgbled", coapServerRgbLedRequest, instanceInfo);
+	coapServerCreateResource(sInstance, "temperature", coapServerTemperatureRequest, instanceInfo);
+	coapServerCreateResource(sInstance, "sensorread", coapServerSensorReadRequest, instanceInfo);
 
 	uartCostumeWritef("CoAP server port: %i", OTCOAP_PORT);
 
-	//Initialize timer2 as PWM
-	timer2_config cfg;
-	hw_timer2_init(&cfg);
-	hw_timer2_set_frequency(500);
-	hw_timer2_set_pwm_duty_cycle(0, 0);
-	hw_timer2_enable();
+	//initialize general purpose ADC
+	hw_gpadc_init(NULL);
+	hw_gpadc_set_input_mode(HW_GPADC_INPUT_MODE_SINGLE_ENDED);
+	hw_gpadc_set_input_attenuator_state(true);
 
-	//Initialize GPIO pin P4_0 as GPIO using PWM timer 2
-	hw_gpio_set_pin_function(HW_GPIO_PORT_4, HW_GPIO_PIN_0, HW_GPIO_MODE_OUTPUT, HW_GPIO_FUNC_PWM2);
+	//initialize pin P0_6 as analog input
+	hw_gpio_set_pin_function(HW_GPIO_PORT_0, HW_GPIO_PIN_7, HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_ADC);
+
+	//initialize temperature sensor
+	hw_tempsens_enable();
+
+	//initialize RGB led on P3_0..P3_2
+	rgbInit(HW_GPIO_PORT_3, HW_GPIO_PIN_0, HW_GPIO_PORT_3, HW_GPIO_PIN_1, HW_GPIO_PORT_3, HW_GPIO_PIN_2);
 
 	//initialize push button
 	hw_gpio_set_pin_function(HW_GPIO_PORT_1, HW_GPIO_PIN_6, HW_GPIO_MODE_INPUT_PULLUP,
@@ -205,28 +213,4 @@ void loop(otInstance *sInstance) {
 	} else {
 		a++;
 	}
-
-	//Start of DirtyPWM loop
-	if (skipCounter >= skipSteps) {
-		skipCounter = 0;
-		if (isIncrementing) {
-
-			if (pwmDutyCycle <= (255 - stepSize)) {
-				pwmDutyCycle += stepSize;
-				hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
-			} else {
-				isIncrementing = 0;
-			}
-		} else {
-			if (pwmDutyCycle >= stepSize) {
-				pwmDutyCycle -= stepSize;
-				hw_timer2_set_pwm_duty_cycle(0, pwmDutyCycle);
-			} else {
-				isIncrementing = 1;
-			}
-		}
-	} else {
-		skipCounter++;
-	}
-	//End of DirtyPWM loop
 }

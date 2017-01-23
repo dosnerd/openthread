@@ -89,6 +89,9 @@ libopenthread_da15000_a_SOURCES                                                 
     @top_builddir@/third_party/dialog/DialogSDK/interfaces/ftdf/src/ad_ftdf.c             \
     @top_builddir@/third_party/dialog/DialogSDK/interfaces/ftdf/src/main.c                \
 	@top_builddir@/third_party/dialog/DialogSDK/bsp/peripherals/src/hw_timer2.c           \
+	@top_builddir@/third_party/dialog/DialogSDK/bsp/peripherals/src/hw_tempsens.c         \
+	@top_builddir@/third_party/dialog/DialogSDK/bsp/peripherals/src/hw_usb_charger.c      \
+	@top_builddir@/third_party/dialog/DialogSDK/bsp/peripherals/src/hw_gpadc.c            \
     $(NULL)
 
 noinst_HEADERS                                                                          = \
