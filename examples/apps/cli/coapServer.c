@@ -192,13 +192,14 @@ void coapServerTemperatureRequest(void *aContext, otCoapHeader *aHeader, otMessa
 
 	contextInfo *sInfo = aContext;
 	otInstance *sInstance = sInfo->info;
+	hw_gpadc_set_input_attenuator_state(false);
     hw_gpadc_set_input(HW_GPADC_INPUT_SE_TEMPSENS);
 	int temperature = hw_tempsens_read();
 
 	char *message;
 	message = malloc(sizeof(char) * 4);
 	sprintf(message, "%d", temperature);
-	uartCostumeWritef("%i, %s", temperature, message);
+	uartCostumeWritef("Temperature measured: %s",message);
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, message, strlen(message));
 
 	(void) aMessage;
@@ -211,14 +212,15 @@ void coapServerSensorReadRequest(void *aContext, otCoapHeader *aHeader, otMessag
 	contextInfo *sInfo = aContext;
 	otInstance *sInstance = sInfo->info;
 	uint16_t sensorValue = 0;
+	hw_gpadc_set_input_attenuator_state(true);
     hw_gpadc_set_input(HW_GPADC_INPUT_SE_P07);
     hw_gpadc_adc_measure();
-    sensorValue = hw_gpadc_get_raw_value();
+    sensorValue = hw_gpadc_get_value();
 
 	char *message;
 	message = malloc(sizeof(char) * 4);
 	sprintf(message, "%d", sensorValue);
-	uartCostumeWritef("%i, %s", sensorValue, message);
+	uartCostumeWritef("Sensor value measured: %s",message);
 	coapServerSendResponse(sInstance, aHeader, aMessageInfo, message, strlen(message));
 
 	(void) aMessage;

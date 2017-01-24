@@ -156,7 +156,7 @@ void setup(otInstance *sInstance) {
 	//initialize general purpose ADC
 	hw_gpadc_init(NULL);
 	hw_gpadc_set_input_mode(HW_GPADC_INPUT_MODE_SINGLE_ENDED);
-	hw_gpadc_set_input_attenuator_state(true);
+	hw_gpadc_enable();
 
 	//initialize pin P0_6 as analog input
 	hw_gpio_set_pin_function(HW_GPIO_PORT_0, HW_GPIO_PIN_7, HW_GPIO_MODE_INPUT, HW_GPIO_FUNC_ADC);
