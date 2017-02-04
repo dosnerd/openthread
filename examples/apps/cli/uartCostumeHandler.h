@@ -37,5 +37,7 @@ void ProcessGET(int argc, char *argv[], otInstance *sInstance);
 void ProcessPOST(int argc, char *argv[], otInstance *sInstance);
 void ProcessPUT(int argc, char *argv[], otInstance *sInstance);
 void ProcessDELETE(int argc, char *argv[], otInstance *sInstance);
+void ProcessServerName(int argc, char *argv[], otInstance *sInstance);
+void ProcessIPtable(int argc, char *argv[], otInstance *sInstance);
 
 #endif /* EXAMPLES_APPS_CLI_UARTCOSTUMEHANDLER_H_ */

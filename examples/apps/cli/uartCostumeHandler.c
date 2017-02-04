@@ -19,27 +19,22 @@
 #include <platform/uart.h>
 
 //temp
-#include "program.h"
 #include "base.h"
-#include "coapClient.h"
+#include "network/coapClient.h"
+#include "network/coapServer.h"
 
 #define MAX_ARGS 32
 
 //based of cli.cpp
 struct Command {
 	const char *mName;                         ///< A pointer to the command string.
-	void (*mCommand)(int argc, char *argv[], otInstance *sInstance);  ///< A function pointer to process the command.
+	void (*mCommand)(int argc, char *argv[], otInstance *sInstance); ///< A function pointer to process the command.
 };
 
 //list of commands
-const struct Command sCommands[] = {
-		{ "echo", &ProcessEcho },
-		{ "broadcast", &ProcessBroadcast },
-		{"GET", &ProcessGET },
-		{"POST", &ProcessPOST },
-		{"PUT", &ProcessPUT },
-		{"DELETE", &ProcessDELETE },
-};
+const struct Command sCommands[] = { { "echo", &ProcessEcho }, { "broadcast", &ProcessBroadcast }, {
+		"GET", &ProcessGET }, { "POST", &ProcessPOST }, { "PUT", &ProcessPUT }, { "DELETE",
+		&ProcessDELETE }, { "servername", &ProcessServerName }, { "IPtable", &ProcessIPtable }, };
 
 char *uartCostumeGetInputBuffer() {
 	static char buffer[UART_INPUT_BUFFER];
@@ -144,7 +139,7 @@ void ProcessEcho(int argc, char *argv[], otInstance *sInstance) {
 	for (int i = 0; i < argc; ++i) {
 		uartCostumeWritet(argv[i]);
 	}
-	(void)sInstance;
+	(void) sInstance;
 }
 
 void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
@@ -164,23 +159,29 @@ void ProcessBroadcast(int argc, char *argv[], otInstance *sInstance) {
 		uartCostumeWritef("broadcast: %s", buffer)
 
 		//broadcast message, with the first arguments as resource
-		broadcast(sInstance, argv[0], buffer);
+		broadcast(sInstance, argv[0], buffer, strlen(buffer));
 		free(buffer);
 	} else {
-		broadcast(sInstance, "mytest", "PING");
+		broadcast(sInstance, "mytest", "PING", strlen("PING"));
 	}
 }
 
-void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code){
+void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code) {
 	otIp6Address address;
+	const otIp6Address *pAddress = 0;
 	char *buffer;
 
 	//send request if enough arguments
 	if (argc > 2) {
 		//create Ip6Address
 		if (otIp6AddressFromString(argv[0], &address) != kThreadError_None) {
-			uartCostumeWritet("Can not parse address");
-			return;
+			pAddress = coapClientNameTable(argv[0], address, READ);
+			if (!pAddress) {
+				uartCostumeWritet("Can not parse address");
+				return;
+			}
+
+			address = *pAddress;
 		}
 
 		//join arguments
@@ -197,10 +198,11 @@ void ProcessSend(int argc, char *argv[], otInstance *sInstance, otCoapCode code)
 		uartCostumeWritef("send to %s: %s", argv[0], buffer)
 
 		//send request to given address, with the second argument as resource
-		coapClientTransmit(sInstance, address, code, argv[1], buffer, strlen(buffer), &responseHandler);
+		coapClientTransmit(sInstance, address, code, argv[1], buffer, strlen(buffer),
+				&standardResponseHandler);
 		free(buffer);
 	} else {
-		uartCostumeWritet("Not enough arguments. Use <addr> <resource> message...");
+		uartCostumeWritet("Not enough arguments. Use <addr or name> <resource> message...");
 	}
 }
 
@@ -215,4 +217,32 @@ void ProcessPUT(int argc, char *argv[], otInstance *sInstance) {
 }
 void ProcessDELETE(int argc, char *argv[], otInstance *sInstance) {
 	ProcessSend(argc, argv, sInstance, kCoapRequestDelete);
+}
+
+void ProcessServerName(int argc, char *argv[], otInstance *sInstance) {
+	if (strcmp(argv[0], "set") == 0) {
+		if (argc > 1) {
+			uartCostumeWritef("TEXT: %s END", argv[1]);
+			coapServerName(argv[1], WRITE);
+		}
+	}
+
+	uartCostumeWritef("Servername: %s", coapServerName(0, READ));
+	(void) sInstance;
+}
+
+void ProcessIPtable(int argc, char *argv[], otInstance *sInstance) {
+	if (argc > 0) {
+		if (strcmp(argv[0], "track") == 0) {
+			if (argc > 1) {
+				uartCostumeWritef("TEXT: %s END", argv[1]);
+				coapClientNameTable(argv[1], (otIp6Address ) { { { 0 } } }, TRACK);
+				uartCostumeWritet("Name added to watch list");
+			}
+		} else if (strcmp(argv[0], "refresh") == 0) {
+			broadcast(sInstance, "__UPDATEIP__", coapServerName(0, READ),
+					strlen(coapServerName(0, READ)));
+		}
+	}
+	(void) sInstance;
 }

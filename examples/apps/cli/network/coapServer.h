@@ -20,18 +20,22 @@
 
 #define OTCOAP_PORT OT_DEFAULT_COAP_PORT
 
-void coapServerStart(otInstance *sInstance);
+char *coapServerName(char *name, uint8_t action);
+void coapServerStart(otInstance *sInstance, char *name);
+
 void coapServerSendResponse(otInstance *sInstance, otCoapHeader *aHeader,
 		const otMessageInfo *aMessageInfo, const void *message, uint16_t len);
 otCoapResource *coapServerCreateResource(otInstance *sInstance, const char *uri,
 		otCoapRequestHandler mHandler, contextInfo *mContextInfo);
 void coapServerRemoveResource(otInstance *sInstance, otCoapResource *sCoapResource);
 
-void coapServerTestRequestHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+void coapServerResponseNameHandler(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 		const otMessageInfo *aMessageInfo);
 void coapServerEnabledRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 		const otMessageInfo *aMessageInfo);
 void coapServerDescriptionRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
+		const otMessageInfo *aMessageInfo);
+void coapServerNameRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 		const otMessageInfo *aMessageInfo);
 void coapServerButtonRequest(void *aContext, otCoapHeader *aHeader, otMessage aMessage,
 		const otMessageInfo *aMessageInfo);

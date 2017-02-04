@@ -50,8 +50,9 @@ LDFLAGS_COMMON                                                         = \
 
 SOURCES_COMMON                                                         = \
     uartCostumeHandler.c                                                 \
-    coapClient.c                                                         \
-    coapServer.c                                                         \
+    network/NRP.c                                                        \
+    network/coapClient.c                                                 \
+    network/coapServer.c                                                 \
     base.c                                                               \
     program.c                                                            \
     main.c                                                               \
